@@ -72,36 +72,37 @@ if uploaded_file:
 
     results = []
 
-    for address in df["Address"]:
-        geo = geocode_address(address)
-        time.sleep(1.5)  # важно за безплатния геокодинг
+for address in df["Address"]:
+    geo = geocode_address(address)
+    time.sleep(1.5)
 
-       if geo:
-    lat, lon, details = geo
-    distance_km = geodesic(ref_coords, (lat, lon)).km
+    if geo:
+        lat, lon, details = geo
+        distance_km = geodesic(ref_coords, (lat, lon)).km
 
-    if distance_km > 15:
-        continue
+        if distance_km > 15:
+            st.write("⚠️ Адресът е твърде далеч и е изключен:", address)
+            continue
 
+        district = (
+            details.get("city_district")
+            or details.get("suburb")
+            or details.get("municipality")
+            or details.get("city")
+            or "Неопределен"
+        )
 
-            district = (
-                details.get("city_district")
-                or details.get("suburb")
-                or details.get("municipality")
-                or details.get("city")
-                or "Неопределен"
-            )
+        results.append({
+            "Address": address,
+            "District": district,
+            "Distance_km": round(distance_km, 2),
+            "Latitude": lat,
+            "Longitude": lon
+        })
 
-            results.append({
-                "Address": address,
-                "District": district,
-                "Distance_km": round(distance_km, 2),
-                "Latitude": lat,
-                "Longitude": lon
-            })
-
- else:
+    else:
         st.write("⚠️ Адресът не можа да бъде геокодиран:", address)
+
 
     data = pd.DataFrame(results)
 
