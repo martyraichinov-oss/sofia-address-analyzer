@@ -11,7 +11,7 @@ import plotly.express as px
 st.set_page_config(page_title="Анализ на адреси – София", layout="wide")
 st.title("Анализ на адреси – София и София-област")
 
-REF_COORDS = (42.68333, 23.29167)  # ул. Нишава 107
+REF_COORDS = (42.67394691, 23.29783574)  # ул. Нишава 107 (точни координати)
 
 # -------------------------------------------------
 # КАЧВАНЕ НА ФАЙЛ
@@ -72,10 +72,14 @@ folium.Marker(
 for _, r in df.iterrows():
     folium.CircleMarker(
         location=[r["Latitude"], r["Longitude"]],
-        radius=6,
-        popup=f"{r['Address']}<br>{r.get('District','')}<br>{r['Distance_km']} км",
-        fill=True
+        radius=8,
+        color="red",
+        fill=True,
+        fill_color="red",
+        fill_opacity=0.85,
+        popup=f"{r['Address']}<br>{r.get('District','')}<br>{r['Distance_km']} км"
     ).add_to(m)
+
 
 st_folium(m, width=1200)
 
