@@ -33,26 +33,16 @@ uploaded_file = st.file_uploader(
 
 def geocode_address(address):
     try:
-        # почистване на адреса
         clean_address = address.strip().strip(",")
 
-        # 1-ви опит: пълен адрес + държава
-        query = f"{clean_address}, Bulgaria"
         location = geolocator.geocode(
-            query,
+            clean_address,
             addressdetails=True,
-            timeout=10
+            timeout=10,
+            country_codes="bg",
+            viewbox="23.10,42.55,23.45,42.80",
+            bounded=True
         )
-
-        # 2-ри опит: без номер
-        if not location:
-            simplified = clean_address.split(",")[0]
-            query = f"{simplified}, Sofia, Bulgaria"
-            location = geolocator.geocode(
-                query,
-                addressdetails=True,
-                timeout=10
-            )
 
         if location:
             return (
@@ -65,6 +55,7 @@ def geocode_address(address):
         return None
 
     return None
+
 
 
 # -------------------------------------------------
@@ -85,9 +76,13 @@ if uploaded_file:
         geo = geocode_address(address)
         time.sleep(1.5)  # важно за безплатния геокодинг
 
-        if geo:
-            lat, lon, details = geo
-            distance_km = geodesic(ref_coords, (lat, lon)).km
+       if geo:
+    lat, lon, details = geo
+    distance_km = geodesic(ref_coords, (lat, lon)).km
+
+    if distance_km > 15:
+        continue
+
 
             district = (
                 details.get("city_district")
@@ -104,6 +99,9 @@ if uploaded_file:
                 "Latitude": lat,
                 "Longitude": lon
             })
+
+ else:
+        st.write("⚠️ Адресът не можа да бъде геокодиран:", address)
 
     data = pd.DataFrame(results)
 
