@@ -18,17 +18,9 @@ REFERENCE_ADDRESS = "София, ул. Нишава 107"
 # -------------------------------------------------
 # ГЕОКОДИНГ – РЕФЕРЕНТНА ТОЧКА (СТАБИЛНА)
 # -------------------------------------------------
-geolocator = Nominatim(user_agent="sofia_address_app")
+# Фиксирани координати на референтната точка (ул. Нишава 107, София)
+ref_coords = (42.68333, 23.29167)
 
-ref_location = geolocator.geocode(REFERENCE_ADDRESS, timeout=10)
-if not ref_location:
-    st.error(
-        "Референтният адрес (ул. Нишава 107) не може да бъде намерен в момента. "
-        "Моля, опитай отново след малко."
-    )
-    st.stop()
-
-ref_coords = (ref_location.latitude, ref_location.longitude)
 
 # -------------------------------------------------
 # КАЧВАНЕ НА ФАЙЛ
