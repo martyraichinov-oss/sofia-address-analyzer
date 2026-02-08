@@ -31,7 +31,6 @@ uploaded_file = st.file_uploader(
     type=["xlsx"]
 )
 
-@st.cache_data
 def geocode_address(address):
     try:
         # почистване на адреса
