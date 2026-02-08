@@ -13,13 +13,10 @@ import time
 st.set_page_config(page_title="Sofia Address Analyzer", layout="wide")
 st.title("Анализ на адреси – София и София-област")
 
-REFERENCE_ADDRESS = "София, ул. Нишава 107"
-
 # -------------------------------------------------
-# ГЕОКОДИНГ – РЕФЕРЕНТНА ТОЧКА (СТАБИЛНА)
+# РЕФЕРЕНТНА ТОЧКА (ФИКСИРАНА)
 # -------------------------------------------------
-# Фиксирани координати на референтната точка (ул. Нишава 107, София)
-ref_coords = (42.68333, 23.29167)
+ref_coords = (42.68333, 23.29167)  # ул. Нишава 107
 
 geolocator = Nominatim(user_agent="sofia_address_app")
 
@@ -31,6 +28,9 @@ uploaded_file = st.file_uploader(
     type=["xlsx"]
 )
 
+# -------------------------------------------------
+# ГЕОКОДИНГ ФУНКЦИЯ (ЗАКЛЮЧЕНА В СОФИЯ)
+# -------------------------------------------------
 def geocode_address(address):
     try:
         clean_address = address.strip().strip(",")
@@ -50,13 +50,10 @@ def geocode_address(address):
                 location.longitude,
                 location.raw.get("address", {})
             )
-
     except Exception:
         return None
 
     return None
-
-
 
 # -------------------------------------------------
 # ОСНОВНА ЛОГИКА
@@ -72,16 +69,19 @@ if uploaded_file:
 
     results = []
 
-for address in df["Address"]:
-    geo = geocode_address(address)
-    time.sleep(1.5)
+    for address in df["Address"]:
+        geo = geocode_address(address)
+        time.sleep(1.5)
 
-    if geo:
+        if not geo:
+            st.write("⚠️ Адресът не можа да бъде геокодиран:", address)
+            continue
+
         lat, lon, details = geo
         distance_km = geodesic(ref_coords, (lat, lon)).km
 
         if distance_km > 15:
-            st.write("⚠️ Адресът е твърде далеч и е изключен:", address)
+            st.write("⚠️ Адресът е извън допустимата дистанция:", address)
             continue
 
         district = (
@@ -100,17 +100,13 @@ for address in df["Address"]:
             "Longitude": lon
         })
 
-    else:
-        st.write("⚠️ Адресът не можа да бъде геокодиран:", address)
-
-
     data = pd.DataFrame(results)
 
     if data.empty:
-        st.warning("Нито един адрес не можа да бъде разпознат.")
+        st.warning("Нито един адрес не можа да бъде коректно позициониран.")
         st.stop()
 
-    st.success(f"Успешно обработени адреси: {len(data)}")
+    st.success(f"Успешно визуализирани адреси: {len(data)}")
 
     # -------------------------------------------------
     # КАРТА
@@ -128,7 +124,7 @@ for address in df["Address"]:
     for _, row in data.iterrows():
         folium.CircleMarker(
             location=[row["Latitude"], row["Longitude"]],
-            radius=5,
+            radius=6,
             popup=f"{row['Address']}<br>{row['District']}<br>{row['Distance_km']} км",
             fill=True
         ).add_to(m)
@@ -138,7 +134,7 @@ for address in df["Address"]:
     # -------------------------------------------------
     # ТАБЛИЦА
     # -------------------------------------------------
-    st.subheader("Таблица с адреси, райони и дистанция")
+    st.subheader("Таблица с адреси")
     st.dataframe(data[["Address", "District", "Distance_km"]])
 
     # -------------------------------------------------
@@ -157,31 +153,17 @@ for address in df["Address"]:
     # -------------------------------------------------
     # ГРАФИКИ
     # -------------------------------------------------
-    st.subheader("Разпределение по административни райони")
-
-    district_chart = (
-        data.groupby("District")
-        .size()
-        .reset_index(name="Брой")
-    )
-
+    st.subheader("Разпределение по райони")
     fig_district = px.bar(
-        district_chart,
+        data.groupby("District").size().reset_index(name="Брой"),
         x="District",
         y="Брой"
     )
     st.plotly_chart(fig_district, use_container_width=True)
 
     st.subheader("Разпределение по дистанция")
-
-    distance_chart = (
-        data.groupby("Distance_Group")
-        .size()
-        .reset_index(name="Брой")
-    )
-
     fig_distance = px.pie(
-        distance_chart,
+        data.groupby("Distance_Group").size().reset_index(name="Брой"),
         names="Distance_Group",
         values="Брой"
     )
@@ -195,9 +177,7 @@ for address in df["Address"]:
     top_district = data["District"].value_counts().idxmax()
     top_distance = data["Distance_Group"].value_counts().idxmax()
 
+    st.write(f"Най-голяма концентрация се наблюдава в район {top_district}.")
     st.write(
-        f"Най-голяма концентрация на адреси се наблюдава в район {top_district}."
-    )
-    st.write(
-        f"По-голямата част от адресите се намират на дистанция '{top_distance}' спрямо ул. Нишава 107."
+        f"По-голямата част от адресите са на дистанция '{top_distance}' спрямо ул. Нишава 107."
     )
