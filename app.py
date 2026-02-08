@@ -33,16 +33,39 @@ uploaded_file = st.file_uploader(
 @st.cache_data
 def geocode_address(address):
     try:
-        location = geolocator.geocode(address, addressdetails=True, timeout=10)
+        # почистване на адреса
+        clean_address = address.strip().strip(",")
+
+        # 1-ви опит: пълен адрес + държава
+        query = f"{clean_address}, Bulgaria"
+        location = geolocator.geocode(
+            query,
+            addressdetails=True,
+            timeout=10
+        )
+
+        # 2-ри опит: без номер
+        if not location:
+            simplified = clean_address.split(",")[0]
+            query = f"{simplified}, Sofia, Bulgaria"
+            location = geolocator.geocode(
+                query,
+                addressdetails=True,
+                timeout=10
+            )
+
         if location:
             return (
                 location.latitude,
                 location.longitude,
                 location.raw.get("address", {})
             )
-    except:
+
+    except Exception:
         return None
+
     return None
+
 
 # -------------------------------------------------
 # ОСНОВНА ЛОГИКА
@@ -60,7 +83,7 @@ if uploaded_file:
 
     for address in df["Address"]:
         geo = geocode_address(address)
-        time.sleep(1)  # важно за безплатния геокодинг
+        time.sleep(1.5)  # важно за безплатния геокодинг
 
         if geo:
             lat, lon, details = geo
