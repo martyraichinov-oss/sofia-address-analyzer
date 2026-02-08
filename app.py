@@ -35,14 +35,23 @@ def geocode_address(address):
     try:
         clean_address = address.strip().strip(",")
 
+        # 1-ви опит: адрес + София + България
+        query = f"{clean_address}, Sofia, Bulgaria"
         location = geolocator.geocode(
-            clean_address,
+            query,
             addressdetails=True,
-            timeout=10,
-            country_codes="bg",
-            viewbox="23.10,42.55,23.45,42.80",
-            bounded=True
+            timeout=10
         )
+
+        # 2-ри опит: само улица + София
+        if not location:
+            street_only = clean_address.split(",")[0]
+            query = f"{street_only}, Sofia, Bulgaria"
+            location = geolocator.geocode(
+                query,
+                addressdetails=True,
+                timeout=10
+            )
 
         if location:
             return (
@@ -50,6 +59,7 @@ def geocode_address(address):
                 location.longitude,
                 location.raw.get("address", {})
             )
+
     except Exception:
         return None
 
