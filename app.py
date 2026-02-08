@@ -42,8 +42,14 @@ if uploaded_file:
 
     st.info("Обработване на адресите… Това може да отнеме малко време.")
 
-    ref_location = geolocator.geocode(REFERENCE_ADDRESS)
-    ref_coords = (ref_location.latitude, ref_location.longitude)
+  ref_location = geolocator.geocode(REFERENCE_ADDRESS, timeout=10)
+
+if not ref_location:
+    st.error("Референтният адрес (ул. Нишава 107) не може да бъде намерен в момента. Опитай отново след малко.")
+    st.stop()
+
+ref_coords = (ref_location.latitude, ref_location.longitude)
+
 
     results = []
 
